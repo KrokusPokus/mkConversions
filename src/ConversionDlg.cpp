@@ -31,20 +31,20 @@ constexpr int kStatusMinWidth    = 428;
 constexpr int kButtonWidth       = 80;
 constexpr int kButtonHeight      = 40;
 
-// Settings: last used target per source format, e.g. "LastTarget/PNG=PNG_to_JXL_LOSSLESS"
-const QString     kSettingsLastTargetGroup = QStringLiteral("LastTarget");
+// State: last used target per source format, e.g. "LastTarget/PNG=PNG_to_JXL_LOSSLESS"
+const QString     kStateLastTargetGroup = QStringLiteral("LastTarget");
 
 // Arrow between source format and target list. At its original size "→" looks too small next to the text;
 // at 150 % its stroke width roughly matches that of the font.
 const QString     kArrow         = QStringLiteral("\u2192");
 constexpr double  kArrowScale    = 1.5;
 
-// ~/.config/mkProjects/mkConversions.conf
-QString SettingsFilePath()
+// ~/.local/state/mkProjects/mkConversions_state.conf
+QString StateFilePath()
 {
-    const QString sConfigDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)).filePath(QStringLiteral("mkProjects"));
-    QDir().mkpath(sConfigDir);
-    return QDir(sConfigDir).filePath(QStringLiteral("mkConversions.conf"));
+    const QString sStateDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation)).filePath(QStringLiteral("mkProjects"));
+    QDir().mkpath(sStateDir);
+    return QDir(sStateDir).filePath(QStringLiteral("mkConversions_state.conf"));
 }
 
 QColor LossyTextColor(const QPalette& palette)
@@ -226,14 +226,14 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
 // Preselect the last used target of each source format (if it still exists)
 void CConversionDlg::RestoreLastTargets()
 {
-    QSettings settings(SettingsFilePath(), QSettings::IniFormat);
-    settings.beginGroup(kSettingsLastTargetGroup);
+    QSettings state(StateFilePath(), QSettings::IniFormat);
+    state.beginGroup(kStateLastTargetGroup);
     const QList<SConversion>& aConversions = AllConversions();
     for (const SRow& row : std::as_const(m_aRows)) {
         if (row.pTargets->count() == 0)
             continue;
         const QString sSourceName = aConversions.at(row.pTargets->itemData(0).toInt()).sSourceName;
-        const QString sLastId = settings.value(sSourceName).toString();
+        const QString sLastId = state.value(sSourceName).toString();
         if (sLastId.isEmpty())
             continue;
         for (int nItem = 0; nItem < row.pTargets->count(); ++nItem) {
@@ -243,15 +243,15 @@ void CConversionDlg::RestoreLastTargets()
             }
         }
     }
-    settings.endGroup();
+    state.endGroup();
 }
 
 void CConversionDlg::SaveLastTarget(const SConversion& conv)
 {
-    QSettings settings(SettingsFilePath(), QSettings::IniFormat);
-    settings.beginGroup(kSettingsLastTargetGroup);
-    settings.setValue(conv.sSourceName, conv.sId);
-    settings.endGroup();
+    QSettings state(StateFilePath(), QSettings::IniFormat);
+    state.beginGroup(kStateLastTargetGroup);
+    state.setValue(conv.sSourceName, conv.sId);
+    state.endGroup();
 }
 
 // Show the row in red if the selected target is lossy
