@@ -1,7 +1,7 @@
 #!/bin/bash
 # Installs the Dolphin context menus for the current user:
-#   - "Formate konvertieren"                    (files and folders)
-#   - "Formate konvertieren (inkl. Unterordner)" (folders only)
+#   - "Convert formats"                         (files and folders)
+#   - "Convert formats (including subfolders)"  (folders only)
 # Two separate .desktop files, because MimeType= applies to all actions of a file.
 # Prerequisite: mkConversions has been built (build.sh copies it to ~/.local/bin).
 

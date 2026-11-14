@@ -7,7 +7,7 @@
 #include <QProcess>
 #include <QStringList>
 
-// Processes the file list asynchronously (corresponds to DoConversion() in the AHK script).
+// Processes the file list asynchronously.
 // Exactly one external process is started per file; pause takes effect between two
 // files, abort cleanly terminates the running process.
 class CConverter : public QObject

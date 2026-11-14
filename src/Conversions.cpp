@@ -10,7 +10,7 @@
 QString SConversion::TargetPathFor(const QString& sSourcePath) const
 {
     const QFileInfo fi(sSourcePath);
-    // completeBaseName() corresponds to FNameNoExt from SplitPath or ${FBase%.*}
+    // completeBaseName() strips only the last extension (e.g. "a.tar.gz" -> "a.tar")
     return fi.path() + QLatin1Char('/') + fi.completeBaseName() + QLatin1Char('.') + sTargetExt;
 }
 
@@ -128,7 +128,7 @@ SCommand ImageCommand(const QString& sSrc, const QString& sTgt)
     // Set the JPG quality explicitly (= ImageMagick default 92) so the value shown in the dialog is always correct.
     if (sTgt == "jpg")
         return { kMagick, Magick({ "-background", "white", "-alpha", "remove", "-alpha", "off", "-quality", "92" }) };
-    if (sTgt == "png")  // PNG24 for BMP/JPG as in the original; keep alpha channel and 16 bit for JXL/WebP
+    if (sTgt == "png")  // PNG24 for BMP/JPG; keep alpha channel and 16 bit for JXL/WebP
         return { kMagick, Magick({}, (sSrc == "bmp" || sSrc == "jpg") ? QStringLiteral("PNG24:") : QString()) };
     if (sTgt == "jxl_lossless")
         return { kMagick, Magick({ "-quality", "100" }) };
@@ -152,16 +152,16 @@ const QList<STargetVariant> kAudioTargets = {
 
 SCommand AudioCommand(const QString& sSrc, const QString& sTgt)
 {
-    // Proven tools from the original where they fit directly
-    if (sSrc == "aac" && sTgt == "wav")     // faad -d: downmix from multichannel to stereo as in the original
+    // Dedicated tools where they fit directly
+    if (sSrc == "aac" && sTgt == "wav")     // faad -d: downmix from multichannel to stereo
         return { kFaad, [](const QString& s, const QString& t) { return QStringList{ "-q", "-d", "-o", t, s }; } };
     if (sSrc == "flac" && sTgt == "wav")    // keeps the bit depth (e.g. 24 bit)
         return { kFlac, [](const QString& s, const QString& t) { return QStringList{ "-s", "-d", "-o", t, s }; } };
-    if (sSrc == "mp3" && sTgt == "wav")     // on Windows: madplay
+    if (sSrc == "mp3" && sTgt == "wav")
         return { kLame, [](const QString& s, const QString& t) { return QStringList{ "--nohist", "--decode", s, t }; } };
     if (sSrc == "wav" && sTgt == "flac")
         return { kFlac, [](const QString& s, const QString& t) { return QStringList{ "-s", "-o", t, s }; } };
-    if (sSrc == "wav" && sTgt == "mp3")     // -V 0 corresponds to --preset extreme from the original
+    if (sSrc == "wav" && sTgt == "mp3")     // -V 0 corresponds to --preset extreme
         return { kLame, [](const QString& s, const QString& t) { return QStringList{ "--nohist", "-V", "0", s, t }; } };
     if (sSrc == "aac" && sTgt == "m4a")     // repackage only -> lossless
         return { kFFmpeg, FFmpeg({ "-c:a", "copy", "-movflags", "+faststart" }), {}, "M4A", 0 };

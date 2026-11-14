@@ -66,6 +66,6 @@ Arch packages: `imagemagick` (with libjxl/libwebp), `libjxl` (for `jxlinfo`, `cj
 ## Dolphin context menu
 
 ```
-./servicemenu-install.sh   # "Formate konvertieren" (files + folders), "… (inkl. Unterordner)" (folders only)
+./servicemenu-install.sh   # "Convert formats" (files + folders), "… (including subfolders)" (folders only)
 ./servicemenu-remove.sh
 ```

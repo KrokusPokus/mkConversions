@@ -16,7 +16,7 @@ class QPushButton;
 class QRadioButton;
 struct SConversion;
 
-// Main dialog (corresponds to "Gui,2" in the AHK script):
+// Main dialog:
 //  - one column per media category present in the given files
 //  - one row per source format present in the files: file count + radio button ("PNG") + arrow
 //    + drop-down list with all target formats of the category (red if quality is lost)

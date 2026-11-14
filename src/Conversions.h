@@ -40,7 +40,7 @@ struct SConversion {
 // source format in drop-down list order (lossless targets first).
 const QList<SConversion>& AllConversions();
 
-// Byte count in human-readable form (replacement for String_AutoByteFormat() from the AHK script)
+// Byte count in human-readable form
 QString FormatBytes(qint64 nBytes);
 
 #endif // CONVERSIONS_H

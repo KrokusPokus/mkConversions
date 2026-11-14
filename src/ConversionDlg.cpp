@@ -21,11 +21,11 @@
 #include <array>
 
 namespace {
-constexpr int kMargin            = 20;   // Gui,2: Margin,20,20
-constexpr int kColumnMinWidth    = 150;  // xOffset += 150
-constexpr int kRadioSpacing      = 10;   // y+10
-constexpr int kGroupSpacing      = 20;   // y+20 (new source format)
-constexpr int kStatusMinWidth    = 428;  // w428
+constexpr int kMargin            = 20;
+constexpr int kColumnMinWidth    = 150;
+constexpr int kRadioSpacing      = 10;
+constexpr int kGroupSpacing      = 20;
+constexpr int kStatusMinWidth    = 428;
 constexpr int kButtonWidth       = 80;
 constexpr int kButtonHeight      = 40;
 
@@ -49,7 +49,7 @@ CConversionDlg::CConversionDlg(const QStringList& aFiles, QWidget* pParent)
     setWindowFlag(Qt::WindowMinimizeButtonHint, true);
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
-    // Determine the existing extensions (corresponds to g_FExtList)
+    // Determine the existing extensions
     QHash<QString, int> aSuffixCounts;
     for (const QString& sPath : aFiles)
         ++aSuffixCounts[QFileInfo(sPath).suffix().toLower()];
@@ -69,7 +69,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     pTopLayout->setSpacing(0);
     pMainLayout->addLayout(pTopLayout);
 
-    // Fonts: headings bold and slightly larger, format rows in a fixed-width font (Consolas in the original)
+    // Fonts: headings bold and slightly larger, format rows in a fixed-width font
     QFont fontHeading = font();
     fontHeading.setBold(true);
     if (fontHeading.pointSizeF() > 0)
@@ -197,7 +197,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     connect(m_pStartPauseButton, &QPushButton::clicked, this, &CConversionDlg::OnStartPause);
     pTopLayout->addWidget(m_pStartPauseButton, 0, Qt::AlignTop | Qt::AlignRight);
 
-    // Status lines (Text1/Text2 in the original)
+    // Status lines
     pMainLayout->addSpacing(kGroupSpacing);
     m_pInfoLine1 = new CElidedLabel(this);
     m_pInfoLine2 = new CElidedLabel(this);
@@ -275,7 +275,7 @@ bool CConversionDlg::StartConversion()
     }
     const SConversion& conv = *pConv;
 
-    // Check dependencies (as in the Bash scripts)
+    // Check dependencies
     QStringList aMissing;
     for (const QString& sProgram : QStringList{ conv.sProgram } + conv.aHelperPrograms) {
         if (QStandardPaths::findExecutable(sProgram).isEmpty())

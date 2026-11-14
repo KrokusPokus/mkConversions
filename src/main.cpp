@@ -17,7 +17,7 @@
 namespace {
 
 // Resolve the given paths: files directly, folders are searched for files
-// (like "loop,files,%param%\*.*" in the AHK script; with --recursive also subfolders, as in the Bash scripts).
+// (with --recursive also subfolders).
 QStringList CollectFiles(const QStringList& aArgs, bool bRecursive)
 {
     QCollator collator;
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
                                  QStringLiteral("<paths...>"));
     parser.process(app);
 
-    // Without arguments there is nothing to do (ExitApp in the original)
+    // Without arguments there is nothing to do
     const QStringList aArgs = parser.positionalArguments();
     if (aArgs.isEmpty()) {
         std::fputs(qPrintable(parser.helpText()), stderr);
