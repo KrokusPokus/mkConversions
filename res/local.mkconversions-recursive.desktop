@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Service
+MimeType=inode/directory;
+Actions=mkConversionsRecursive;
+
+[Desktop Action mkConversionsRecursive]
+Name=Convert formats (including subfolders)
+Name[de]=Formate konvertieren (inkl. Unterordner)
+Icon=@ICON@
+Exec=@EXEC@ --recursive %F

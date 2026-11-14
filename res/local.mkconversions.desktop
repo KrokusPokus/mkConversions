@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Service
+MimeType=all/all;
+Actions=mkConversions;
+
+[Desktop Action mkConversions]
+Name=Convert formats
+Name[de]=Formate konvertieren
+Icon=@ICON@
+Exec=@EXEC@ %F

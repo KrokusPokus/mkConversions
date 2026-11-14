@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>mkConversions.svg</file>
+    </qresource>
+</RCC>
