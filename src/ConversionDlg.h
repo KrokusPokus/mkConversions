@@ -56,6 +56,8 @@ private:
     void OnFinished();
     void SetButton(const QString& sText, bool bEnabled);
     void UpdateRowColor(qsizetype nRow);
+    void RestoreLastTargets();
+    void SaveLastTarget(const SConversion& conv);
     const SConversion* SelectedConversion() const;
 
     // One row in the dialog = one source format

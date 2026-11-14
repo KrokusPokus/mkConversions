@@ -61,6 +61,7 @@ QStringList CollectFiles(const QStringList& aArgs, bool bRecursive)
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
+    QApplication::setOrganizationName(QStringLiteral("mkConversions"));   // settings: ~/.config/mkConversions/mkConversions.conf
     QApplication::setApplicationName(QStringLiteral("mkConversions"));
     QApplication::setApplicationVersion(QStringLiteral(MKCONVERSIONS_VERSION));
     QApplication::setDesktopFileName(QStringLiteral("mkConversions"));

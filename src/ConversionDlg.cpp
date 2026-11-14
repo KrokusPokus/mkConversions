@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
@@ -28,6 +29,9 @@ constexpr int kGroupSpacing      = 20;
 constexpr int kStatusMinWidth    = 428;
 constexpr int kButtonWidth       = 80;
 constexpr int kButtonHeight      = 40;
+
+// Settings: last used target per source format, e.g. "LastTarget/PNG=PNG_to_JXL_LOSSLESS"
+const QString     kSettingsLastTargetGroup = QStringLiteral("LastTarget");
 
 // Arrow between source format and target list. At its original size "→" looks too small next to the text;
 // at 150 % its stroke width roughly matches that of the font.
@@ -190,6 +194,8 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     }
     pTopLayout->addStretch(1);
 
+    RestoreLastTargets();
+
     m_pStartPauseButton = new QPushButton(tr("Start"), this);
     m_pStartPauseButton->setFont(fontHeading);
     m_pStartPauseButton->setFixedSize(kButtonWidth, kButtonHeight);
@@ -206,6 +212,37 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     pMainLayout->addWidget(m_pInfoLine1);
     pMainLayout->addSpacing(kRadioSpacing);
     pMainLayout->addWidget(m_pInfoLine2);
+}
+
+// Preselect the last used target of each source format (if it still exists)
+void CConversionDlg::RestoreLastTargets()
+{
+    QSettings settings;
+    settings.beginGroup(kSettingsLastTargetGroup);
+    const QList<SConversion>& aConversions = AllConversions();
+    for (const SRow& row : std::as_const(m_aRows)) {
+        if (row.pTargets->count() == 0)
+            continue;
+        const QString sSourceName = aConversions.at(row.pTargets->itemData(0).toInt()).sSourceName;
+        const QString sLastId = settings.value(sSourceName).toString();
+        if (sLastId.isEmpty())
+            continue;
+        for (int nItem = 0; nItem < row.pTargets->count(); ++nItem) {
+            if (aConversions.at(row.pTargets->itemData(nItem).toInt()).sId == sLastId) {
+                row.pTargets->setCurrentIndex(nItem);   // also updates the row color
+                break;
+            }
+        }
+    }
+    settings.endGroup();
+}
+
+void CConversionDlg::SaveLastTarget(const SConversion& conv)
+{
+    QSettings settings;
+    settings.beginGroup(kSettingsLastTargetGroup);
+    settings.setValue(conv.sSourceName, conv.sId);
+    settings.endGroup();
 }
 
 // Show the row in red if the selected target is lossy
@@ -294,6 +331,8 @@ bool CConversionDlg::StartConversion()
         if (eAnswer != QMessageBox::Yes)
             return false;
     }
+
+    SaveLastTarget(conv);
 
     for (const SRow& row : std::as_const(m_aRows)) {
         row.pRadio->setEnabled(false);

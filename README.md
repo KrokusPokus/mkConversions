@@ -14,6 +14,8 @@ mkConversions [-r|--recursive] <files and/or folders...>
   files. For each source format there is a row `( ) PNG -> [target format ▾]`; the list contains all
   formats of the category except the source format (lossless ones first). If a lossy target is selected,
   the row turns **red** and the start has to be confirmed.
+- The target format last used for each source format is remembered and preselected next time
+  (stored in `~/.config/mkConversions/mkConversions.conf`).
 - **Start** → **Pause** → **Continue** … → **Close**. Pause takes effect as soon as the current file is finished.
 - After a successful conversion the **source file is deleted**. If the target file already exists, the file is skipped.
 - Close/Escape during the conversion aborts it: the running process is terminated, the unfinished target file is deleted,
