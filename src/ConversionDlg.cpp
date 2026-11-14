@@ -24,19 +24,19 @@ namespace {
 constexpr int kMargin            = 20;   // Gui,2: Margin,20,20
 constexpr int kColumnMinWidth    = 150;  // xOffset += 150
 constexpr int kRadioSpacing      = 10;   // y+10
-constexpr int kGroupSpacing      = 20;   // y+20 (neues Quellformat)
+constexpr int kGroupSpacing      = 20;   // y+20 (new source format)
 constexpr int kStatusMinWidth    = 428;  // w428
 constexpr int kButtonWidth       = 80;
 constexpr int kButtonHeight      = 40;
 
-// Pfeil zwischen Quellformat und Zielliste. In Originalgröße wirkt "→" neben dem Text zu klein,
-// bei 150 % entspricht seine Strichstärke in etwa der der Schrift.
+// Arrow between source format and target list. At its original size "→" looks too small next to the text;
+// at 150 % its stroke width roughly matches that of the font.
 const QString     kArrow         = QStringLiteral("\u2192");
 constexpr double  kArrowScale    = 1.5;
 
 QColor LossyTextColor(const QPalette& palette)
 {
-    // Auf dunklem Hintergrund ist reines Rot schlecht lesbar
+    // Pure red is hard to read on a dark background
     return palette.color(QPalette::Window).lightness() < 128 ? QColor(0xff, 0x6b, 0x6b) : QColor(0xd0, 0x00, 0x00);
 }
 } // namespace
@@ -49,7 +49,7 @@ CConversionDlg::CConversionDlg(const QStringList& aFiles, QWidget* pParent)
     setWindowFlag(Qt::WindowMinimizeButtonHint, true);
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
-    // Vorhandene Endungen ermitteln (entspricht g_FExtList)
+    // Determine the existing extensions (corresponds to g_FExtList)
     QHash<QString, int> aSuffixCounts;
     for (const QString& sPath : aFiles)
         ++aSuffixCounts[QFileInfo(sPath).suffix().toLower()];
@@ -63,13 +63,13 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
 {
     auto* pMainLayout = new QVBoxLayout(this);
     pMainLayout->setContentsMargins(kMargin, kMargin, kMargin, kMargin);
-    pMainLayout->setSizeConstraint(QLayout::SetFixedSize);   // nicht in der Größe veränderbar
+    pMainLayout->setSizeConstraint(QLayout::SetFixedSize);   // not resizable
 
     auto* pTopLayout = new QHBoxLayout();
     pTopLayout->setSpacing(0);
     pMainLayout->addLayout(pTopLayout);
 
-    // Schriften: Überschriften fett und etwas größer, Formatzeilen in Festbreitenschrift (Consolas im Original)
+    // Fonts: headings bold and slightly larger, format rows in a fixed-width font (Consolas in the original)
     QFont fontHeading = font();
     fontHeading.setBold(true);
     if (fontHeading.pointSizeF() > 0)
@@ -96,7 +96,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     const std::array<EMediaCategory, 3> aCategories = { EMediaCategory::Image, EMediaCategory::Audio, EMediaCategory::Video };
     const QList<SConversion>& aConversions = AllConversions();
 
-    // Anzahl der übergebenen Dateien je Quellformat (z.B. .jpg + .jpeg)
+    // Number of given files per source format (e.g. .jpg + .jpeg)
     auto sourceCount = [&aSuffixCounts](const SConversion& conv) {
         int nCount = 0;
         for (const QString& sExt : conv.aSourceExts)
@@ -106,7 +106,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     auto sourcePresent = [&sourceCount](const SConversion& conv) { return sourceCount(conv) > 0; };
 
     for (EMediaCategory eCategory : aCategories) {
-        // Spalte nur anzeigen, wenn mindestens ein passendes Quellformat vorhanden ist
+        // Show the column only if at least one matching source format is present
         bool bCategoryPresent = false;
         for (const SConversion& conv : aConversions)
             bCategoryPresent = bCategoryPresent || (conv.eCategory == eCategory && sourcePresent(conv));
@@ -136,8 +136,8 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
         pGrid->setVerticalSpacing(kRadioSpacing);
         pColumnLayout->addLayout(pGrid);
 
-        // Nur Quellformate anzeigen, die in den übergebenen Dateien vorkommen.
-        // AllConversions() ist nach Quellformat gruppiert -> neue Zeile bei jedem Wechsel.
+        // Show only source formats that occur in the given files.
+        // AllConversions() is grouped by source format -> new row on every change.
         QString sCurrentSource;
         for (qsizetype i = 0; i < aConversions.size(); ++i) {
             const SConversion& conv = aConversions.at(i);
@@ -151,12 +151,12 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
                 row.pCount = new QLabel(tr("(%n file(s))", nullptr, sourceCount(conv)), pColumn);
                 row.pCount->setFont(fontFixed);
                 row.pCount->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-                row.pCount->installEventFilter(this);   // Klick wählt die Zeile aus
+                row.pCount->installEventFilter(this);   // a click selects the row
                 row.pRadio = new QRadioButton(conv.sSourceName.leftJustified(4), pColumn);
                 row.pRadio->setFont(fontFixed);
                 row.pArrow = new QLabel(kArrow, pColumn);
                 row.pArrow->setFont(fontArrow);
-                row.pArrow->installEventFilter(this);   // Klick auf den Pfeil wählt die Zeile aus
+                row.pArrow->installEventFilter(this);   // a click on the arrow selects the row
                 row.pTargets = new QComboBox(pColumn);
                 row.pTargets->setFont(fontFixed);
                 row.pTargets->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -168,7 +168,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
                 pGrid->addWidget(row.pArrow, static_cast<int>(nRow), 2, Qt::AlignCenter);
                 pGrid->addWidget(row.pTargets, static_cast<int>(nRow), 3);
 
-                // Auswahl in der Liste wählt auch die Zeile aus
+                // Selecting an item in the list also selects the row
                 connect(row.pTargets, &QComboBox::activated, row.pRadio, [pRadio = row.pRadio]() { pRadio->setChecked(true); });
                 connect(row.pTargets, &QComboBox::currentIndexChanged, this, [this, nRow]() { UpdateRowColor(nRow); });
                 m_aRows.append(row);
@@ -197,7 +197,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     connect(m_pStartPauseButton, &QPushButton::clicked, this, &CConversionDlg::OnStartPause);
     pTopLayout->addWidget(m_pStartPauseButton, 0, Qt::AlignTop | Qt::AlignRight);
 
-    // Statuszeilen (Text1/Text2 im Original)
+    // Status lines (Text1/Text2 in the original)
     pMainLayout->addSpacing(kGroupSpacing);
     m_pInfoLine1 = new CElidedLabel(this);
     m_pInfoLine2 = new CElidedLabel(this);
@@ -208,7 +208,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     pMainLayout->addWidget(m_pInfoLine2);
 }
 
-// Zeile rot darstellen, wenn das gewählte Ziel verlustbehaftet ist
+// Show the row in red if the selected target is lossy
 void CConversionDlg::UpdateRowColor(qsizetype nRow)
 {
     const SRow& row = m_aRows.at(nRow);
@@ -245,13 +245,13 @@ void CConversionDlg::OnStartPause()
             StartConversion();
             break;
 
-        case EState::Running:          // Pause anfordern; greift nach der aktuellen Datei
+        case EState::Running:          // request pause; takes effect after the current file
             m_eState = EState::PauseRequested;
             m_pConverter->RequestPause();
             m_pStartPauseButton->setEnabled(false);
             break;
 
-        case EState::Paused:           // fortsetzen
+        case EState::Paused:           // resume
             m_eState = EState::Running;
             SetButton(tr("Pause"), true);
             m_pConverter->Resume();
@@ -261,7 +261,7 @@ void CConversionDlg::OnStartPause()
             accept();
             break;
 
-        case EState::PauseRequested:   // Button ist deaktiviert
+        case EState::PauseRequested:   // button is disabled
             break;
     }
 }
@@ -275,7 +275,7 @@ bool CConversionDlg::StartConversion()
     }
     const SConversion& conv = *pConv;
 
-    // Abhängigkeiten prüfen (wie in den Bash-Scripts)
+    // Check dependencies (as in the Bash scripts)
     QStringList aMissing;
     for (const QString& sProgram : QStringList{ conv.sProgram } + conv.aHelperPrograms) {
         if (QStandardPaths::findExecutable(sProgram).isEmpty())
@@ -345,7 +345,7 @@ void CConversionDlg::OnFinished()
                         tr("Processing finished (%1 successful).\n%n error(s)/note(s) occurred:", nullptr, aErrors.size())
                             .arg(m_pConverter->Stats().nFilesProcessed),
                         QMessageBox::Ok, this);
-        // Bei wenigen Meldungen direkt anzeigen, sonst über "Details anzeigen..."
+        // Show a few messages directly, otherwise via "Show Details..."
         constexpr qsizetype kMaxInlineErrors = 5;
         if (aErrors.size() <= kMaxInlineErrors)
             box.setInformativeText(aErrors.join(QLatin1Char('\n')));
@@ -370,8 +370,8 @@ bool CConversionDlg::eventFilter(QObject* pWatched, QEvent* pEvent)
 
 void CConversionDlg::reject()
 {
-    // Escape / Fenster schließen: eine laufende Konvertierung wird abgebrochen
-    // (der aktuelle Prozess wird beendet, die unfertige Zieldatei gelöscht; die Quelldatei bleibt erhalten).
+    // Escape / closing the window: a running conversion is aborted
+    // (the current process is terminated, the unfinished target file deleted; the source file is kept).
     if (m_pConverter && m_eState != EState::Finished)
         m_pConverter->Abort();
     QDialog::reject();

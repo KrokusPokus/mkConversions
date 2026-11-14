@@ -1,71 +1,71 @@
 # mkConversions
 
-Kleiner Qt6-Dialog zum Konvertieren von Bild-, Audio- und Videodateien zwischen Formaten.
-Linux-Portierung des früheren AutoHotkey-v1.1-Scripts `Conversions.ahk`.
+Small Qt6 dialog for converting image, audio and video files between formats.
+Linux port of the former AutoHotkey v1.1 script `Conversions.ahk`.
 
-## Bedienung
+## Usage
 
 ```
-mkConversions [-r|--recursive] <Dateien und/oder Ordner...>
+mkConversions [-r|--recursive] <files and/or folders...>
 ```
 
-- Ordner werden nach Dateien durchsucht (mit `-r` auch Unterordner).
-- Der Dialog zeigt nur die Spalten (Bild/Audio/Video) und Quellformate (Dateiendungen), die in den übergebenen
-  Dateien vorkommen. Je Quellformat gibt es eine Zeile `( ) PNG -> [Zielformat ▾]`; die Liste enthält alle
-  Formate der Kategorie außer dem Quellformat (verlustfreie zuerst). Wählt man ein verlustbehaftetes Ziel,
-  wird die Zeile **rot** und der Start muss bestätigt werden.
-- **Start** → **Pause** → **Fortsetzen** … → **Schließen**. Pause greift, sobald die aktuelle Datei fertig ist.
-- Nach erfolgreicher Konvertierung wird die **Quelldatei gelöscht**. Existiert die Zieldatei bereits, wird die Datei übersprungen.
-- Schließen/Escape während der Konvertierung bricht ab: der laufende Prozess wird beendet, die unfertige Zieldatei gelöscht,
-  die Quelldatei bleibt erhalten.
-- Fehler und Hinweise werden gesammelt und am Ende in einem Bericht angezeigt.
+- Folders are searched for files (with `-r` also subfolders).
+- The dialog shows only the columns (image/audio/video) and source formats (file extensions) that occur in the given
+  files. For each source format there is a row `( ) PNG -> [target format ▾]`; the list contains all
+  formats of the category except the source format (lossless ones first). If a lossy target is selected,
+  the row turns **red** and the start has to be confirmed.
+- **Start** → **Pause** → **Continue** … → **Close**. Pause takes effect as soon as the current file is finished.
+- After a successful conversion the **source file is deleted**. If the target file already exists, the file is skipped.
+- Close/Escape during the conversion aborts it: the running process is terminated, the unfinished target file is deleted,
+  the source file is kept.
+- Errors and notes are collected and shown in a report at the end.
 
-## Konvertierungen
+## Conversions
 
-**Bilder** – Quellen: BMP, PNG, JPG, JXL, WEBP. Ziele (jeweils ohne das Quellformat):
+**Images** – sources: BMP, PNG, JPG, JXL, WEBP. Targets (each excluding the source format):
 
-| Ziel                | Aufruf                                                                 |
+| Target              | Command                                                                |
 |---------------------|------------------------------------------------------------------------|
-| PNG                 | `magick SRC [PNG24:]DST` (PNG24 nur aus BMP/JPG, sonst bleiben Alpha/16 Bit erhalten) |
+| PNG                 | `magick SRC [PNG24:]DST` (PNG24 only from BMP/JPG, otherwise alpha/16 bit are preserved) |
 | BMP                 | `magick SRC DST`                                                       |
-| JXL Lossless        | `magick SRC -quality 100 DST`; aus JPG: `cjxl --lossless_jpeg=1 SRC DST` (umkehrbar per `djxl`) |
-| WEBP Lossless       | `magick SRC -define webp:lossless=true DST` (WebP kann max. 8 Bit/Kanal) |
+| JXL Lossless        | `magick SRC -quality 100 DST`; from JPG: `cjxl --lossless_jpeg=1 SRC DST` (reversible via `djxl`) |
+| WEBP Lossless       | `magick SRC -define webp:lossless=true DST` (WebP supports max. 8 bit/channel) |
 | JPG (Q92) *(lossy)* | `magick SRC -background white -alpha remove -alpha off -quality 92 DST` |
 | JXL (Q96) *(lossy)* | `magick SRC -quality 96 DST`                                           |
 | WEBP (Q90) *(lossy)*| `magick SRC -quality 90 DST`                                           |
 
-**Audio** – Quellen: AAC, FLAC, MP3, WAV.
+**Audio** – sources: AAC, FLAC, MP3, WAV.
 
-| Ziel                     | Aufruf                                                            |
+| Target                   | Command                                                           |
 |--------------------------|-------------------------------------------------------------------|
 | WAV                      | AAC: `faad -q -d`, FLAC: `flac -s -d`, MP3: `lame --decode`       |
 | FLAC                     | WAV: `flac -s`; AAC/MP3: `ffmpeg -c:a flac -sample_fmt s16`       |
-| M4A                      | AAC: `ffmpeg -c:a copy` (verlustfrei umverpackt)                  |
+| M4A                      | AAC: `ffmpeg -c:a copy` (losslessly repackaged)                   |
 | M4A (AAC 256k) *(lossy)* | `ffmpeg -c:a aac -b:a 256k -movflags +faststart`                  |
 | AAC (256k) *(lossy)*     | `ffmpeg -c:a aac -b:a 256k`                                       |
-| MP3 (V0) *(lossy)*       | WAV: `lame -V 0` (= `--preset extreme`); sonst `ffmpeg -c:a libmp3lame -q:a 0` |
+| MP3 (V0) *(lossy)*       | WAV: `lame -V 0` (= `--preset extreme`); otherwise `ffmpeg -c:a libmp3lame -q:a 0` |
 
-**Video** – Quelle: MP4 → M4A: `ffmpeg -vn -c:a copy -movflags +faststart` (Audiospur verlustfrei extrahieren).
+**Video** – source: MP4 → M4A: `ffmpeg -vn -c:a copy -movflags +faststart` (extract the audio track losslessly).
 
-Alle ffmpeg-Aufrufe laufen mit `-n -vn` (nie überschreiben, nur Audio).
-**Animierte** JXL/WebP-Dateien werden übersprungen (Prüfung per `jxlinfo` bzw. `magick identify`), da ImageMagick
-sonst nur das erste Frame übernehmen bzw. mehrere Einzeldateien schreiben würde und die Quelle anschließend gelöscht wird.
+All ffmpeg calls run with `-n -vn` (never overwrite, audio only).
+**Animated** JXL/WebP files are skipped (checked via `jxlinfo` or `magick identify`), because ImageMagick
+would otherwise take over only the first frame or write several individual files, and the source is deleted afterwards.
 
-Endungen werden ohne Beachtung der Groß-/Kleinschreibung erkannt; `.jpeg` zählt als JPG.
-Eine Konvertierung gilt nur als erfolgreich, wenn das Werkzeug mit Code 0 endet **und** eine nicht-leere Zieldatei existiert.
+Extensions are recognized case-insensitively; `.jpeg` counts as JPG.
+A conversion is only considered successful if the tool exits with code 0 **and** a non-empty target file exists.
 
-Arch-Pakete: `imagemagick` (mit libjxl/libwebp), `libjxl` (für `jxlinfo`, `cjxl`), `ffmpeg`, `flac`, `lame`, `faad2`.
+Arch packages: `imagemagick` (with libjxl/libwebp), `libjxl` (for `jxlinfo`, `cjxl`), `ffmpeg`, `flac`, `lame`, `faad2`.
 
-## Bauen
-
-```
-./build.sh            # baut nach build/bin/ und kopiert nach ~/.local/bin/
-./build_lupdate.sh    # aktualisiert i18n/*.ts
-```
-
-## Dolphin-Kontextmenü
+## Building
 
 ```
-./servicemenu-install.sh   # "Formate konvertieren" (Dateien + Ordner), "… (inkl. Unterordner)" (nur Ordner)
+./build.sh            # builds into build/bin/ and copies to ~/.local/bin/
+./build_lupdate.sh    # updates i18n/*.ts
+```
+
+## Dolphin context menu
+
+```
+./servicemenu-install.sh   # "Formate konvertieren" (files + folders), "… (inkl. Unterordner)" (folders only)
 ./servicemenu-remove.sh
 ```

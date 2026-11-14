@@ -7,9 +7,9 @@
 #include <QProcess>
 #include <QStringList>
 
-// Arbeitet die Dateiliste asynchron ab (entspricht DoConversion() im AHK-Script).
-// Pro Datei wird genau ein externer Prozess gestartet; Pause/Abbruch greifen
-// jeweils zwischen zwei Dateien bzw. beenden den laufenden Prozess sauber.
+// Processes the file list asynchronously (corresponds to DoConversion() in the AHK script).
+// Exactly one external process is started per file; pause takes effect between two
+// files, abort cleanly terminates the running process.
 class CConverter : public QObject
 {
     Q_OBJECT
@@ -26,9 +26,9 @@ public:
     ~CConverter() override;
 
     void Start();
-    void RequestPause();    // wirkt, sobald die aktuelle Datei fertig ist
+    void RequestPause();    // takes effect once the current file is done
     void Resume();
-    void Abort();           // laufenden Prozess beenden, halbfertige Zieldatei löschen
+    void Abort();           // terminate the running process, delete the partial target file
 
     const SStats&      Stats()  const { return m_stats; }
     const QStringList& Errors() const { return m_aErrors; }

@@ -10,7 +10,7 @@
 QString SConversion::TargetPathFor(const QString& sSourcePath) const
 {
     const QFileInfo fi(sSourcePath);
-    // completeBaseName() entspricht FNameNoExt aus SplitPath bzw. ${FBase%.*}
+    // completeBaseName() corresponds to FNameNoExt from SplitPath or ${FBase%.*}
     return fi.path() + QLatin1Char('/') + fi.completeBaseName() + QLatin1Char('.') + sTargetExt;
 }
 
@@ -18,11 +18,11 @@ namespace {
 
 using ArgsFn = std::function<QStringList(const QString& sSource, const QString& sTarget)>;
 
-// ===================================================================================== Hilfsfunktionen
+// ===================================================================================== Helper functions
 
-// Animierte WebP/JXL-Dateien ablehnen: ImageMagick würde bei JXL stillschweigend nur das erste Frame lesen
-// bzw. bei WebP mehrere Zieldateien (name-0.png, name-1.png, ...) schreiben. Da die Quelldatei nach
-// erfolgreicher Konvertierung gelöscht wird, ginge die Animation verloren.
+// Reject animated WebP/JXL files: for JXL, ImageMagick would silently read only the first frame,
+// for WebP it would write several target files (name-0.png, name-1.png, ...). Since the source file
+// is deleted after a successful conversion, the animation would be lost.
 QString CheckStillImage(const QString& sSource)
 {
     constexpr int kTimeoutMs = 30000;
@@ -31,7 +31,7 @@ QString CheckStillImage(const QString& sSource)
     proc.setStandardInputFile(QProcess::nullDevice());
 
     if (QFileInfo(sSource).suffix().compare(QLatin1String("jxl"), Qt::CaseInsensitive) == 0) {
-        // magick zählt bei JXL nur 1 Frame, daher libjxl selbst fragen
+        // magick counts only 1 frame for JXL, so ask libjxl directly
         proc.start(QStringLiteral("jxlinfo"), { sSource });
         if (!proc.waitForStarted())
             return QCoreApplication::translate("Conversions", "jxlinfo could not be started (needed to detect animated JXL files).");
@@ -44,15 +44,15 @@ QString CheckStillImage(const QString& sSource)
     proc.start(QStringLiteral("magick"), { QStringLiteral("identify"), QStringLiteral("-ping"),
                                            QStringLiteral("-format"), QStringLiteral("%n\n"), sSource });
     if (!proc.waitForStarted())
-        return {};  // magick fehlt -> wird bereits beim Start geprüft
+        return {};  // magick missing -> already checked on start
     proc.waitForFinished(kTimeoutMs);
     const int nFrames = QString::fromLocal8Bit(proc.readAll()).section(QLatin1Char('\n'), 0, 0).trimmed().toInt();
     if (nFrames > 1)
         return QCoreApplication::translate("Conversions", "File is an animation with %1 frames (only still images are supported).").arg(nFrames);
-    return {};  // nicht lesbar -> die eigentliche Konvertierung schlägt fehl und meldet den Fehler
+    return {};  // not readable -> the actual conversion fails and reports the error
 }
 
-// ImageMagick 7: magick SRC [Optionen] [PREFIX:]DST
+// ImageMagick 7: magick SRC [options] [PREFIX:]DST
 ArgsFn Magick(const QStringList& aOptions, const QString& sTargetPrefix = {})
 {
     return [aOptions, sTargetPrefix](const QString& s, const QString& t) {
@@ -60,8 +60,8 @@ ArgsFn Magick(const QStringList& aOptions, const QString& sTargetPrefix = {})
     };
 }
 
-// ffmpeg: -n statt -y -> niemals eine vorhandene Datei überschreiben (wird vorher ohnehin geprüft).
-// -vn: nur Audio (verhindert u.a., dass eingebettete Cover-Bilder in .aac/.m4a scheitern).
+// ffmpeg: -n instead of -y -> never overwrite an existing file (checked beforehand anyway).
+// -vn: audio only (among other things, prevents failures due to embedded cover images in .aac/.m4a).
 ArgsFn FFmpeg(const QStringList& aOutputOptions)
 {
     return [aOutputOptions](const QString& s, const QString& t) {
@@ -70,31 +70,31 @@ ArgsFn FFmpeg(const QStringList& aOutputOptions)
     };
 }
 
-// ===================================================================================== Formate
+// ===================================================================================== Formats
 
-// Ein Quellformat (= eine Zeile im Dialog)
+// A source format (= one row in the dialog)
 struct SSourceFormat {
-    QString     sKey;           // interner Schlüssel, z.B. "png"
-    QString     sName;          // Anzeige, z.B. "PNG"
+    QString     sKey;           // internal key, e.g. "png"
+    QString     sName;          // display name, e.g. "PNG"
     QStringList aExts;
 };
 
-// Eine Zielvariante (= ein Eintrag in der DropDown-Liste)
+// A target variant (= one entry in the drop-down list)
 struct STargetVariant {
-    QString sKey;               // interner Schlüssel, z.B. "jxl_lossless"
-    QString sFormatKey;         // Formatschlüssel -> wird beim gleichen Quellformat ausgeblendet
+    QString sKey;               // internal key, e.g. "jxl_lossless"
+    QString sFormatKey;         // format key -> hidden for the same source format
     QString sLabel;
     QString sExt;
     bool    bLossy;
 };
 
-// Konkrete Umsetzung eines (Quelle, Ziel)-Paars
+// Concrete implementation of a (source, target) pair
 struct SCommand {
     QString     sProgram;
     ArgsFn      fnArgs;
     QStringList aHelperPrograms = {};
-    QString     sLabelOverride = {};    // abweichender DropDown-Text
-    int         nLossyOverride = -1;    // -1 = bLossy der Zielvariante, 0/1 = überschreiben
+    QString     sLabelOverride = {};    // differing drop-down text
+    int         nLossyOverride = -1;    // -1 = bLossy of the target variant, 0/1 = override
 };
 
 const QString kMagick = QStringLiteral("magick");
@@ -104,8 +104,8 @@ const QString kLame   = QStringLiteral("lame");
 const QString kFaad   = QStringLiteral("faad");
 const QString kCjxl   = QStringLiteral("cjxl");
 
-// ------------------------------------------------------------------------------------- Bilder
-// Reihenfolge der DropDown-Liste: verlustfreie Ziele zuerst
+// ------------------------------------------------------------------------------------- Images
+// Drop-down list order: lossless targets first
 const QList<STargetVariant> kImageTargets = {
     { "png",          "png",  "PNG",           "png",  false },
     { "bmp",          "bmp",  "BMP",           "bmp",  false },
@@ -118,17 +118,17 @@ const QList<STargetVariant> kImageTargets = {
 
 SCommand ImageCommand(const QString& sSrc, const QString& sTgt)
 {
-    // JPG -> JXL verlustfrei: cjxl packt den JPEG-Datenstrom verlustfrei (und umkehrbar) um, ~20 % kleiner.
-    // magick -quality 100 würde stattdessen die dekodierten Pixel speichern (deutlich größer als das JPG).
+    // JPG -> lossless JXL: cjxl repackages the JPEG data stream losslessly (and reversibly), ~20 % smaller.
+    // magick -quality 100 would store the decoded pixels instead (considerably larger than the JPG).
     if (sSrc == "jpg" && sTgt == "jxl_lossless")
         return { kCjxl, [](const QString& s, const QString& t) {
                      return QStringList{ "--quiet", "--lossless_jpeg=1", s, t }; } };
 
-    // Transparenz auf weißem Hintergrund verrechnen, sonst erscheinen transparente Bereiche z.B. schwarz.
-    // JPG-Qualität explizit setzen (= ImageMagick-Standard 92), damit die Angabe im Dialog immer stimmt.
+    // Flatten transparency onto a white background, otherwise transparent areas may appear black, for example.
+    // Set the JPG quality explicitly (= ImageMagick default 92) so the value shown in the dialog is always correct.
     if (sTgt == "jpg")
         return { kMagick, Magick({ "-background", "white", "-alpha", "remove", "-alpha", "off", "-quality", "92" }) };
-    if (sTgt == "png")  // PNG24 wie im Original für BMP/JPG; bei JXL/WebP Alphakanal und 16 Bit erhalten
+    if (sTgt == "png")  // PNG24 for BMP/JPG as in the original; keep alpha channel and 16 bit for JXL/WebP
         return { kMagick, Magick({}, (sSrc == "bmp" || sSrc == "jpg") ? QStringLiteral("PNG24:") : QString()) };
     if (sTgt == "jxl_lossless")
         return { kMagick, Magick({ "-quality", "100" }) };
@@ -152,30 +152,30 @@ const QList<STargetVariant> kAudioTargets = {
 
 SCommand AudioCommand(const QString& sSrc, const QString& sTgt)
 {
-    // Bewährte Werkzeuge aus dem Original, wo sie direkt passen
-    if (sSrc == "aac" && sTgt == "wav")     // faad -d: Downmix von Mehrkanal auf Stereo wie im Original
+    // Proven tools from the original where they fit directly
+    if (sSrc == "aac" && sTgt == "wav")     // faad -d: downmix from multichannel to stereo as in the original
         return { kFaad, [](const QString& s, const QString& t) { return QStringList{ "-q", "-d", "-o", t, s }; } };
-    if (sSrc == "flac" && sTgt == "wav")    // erhält die Bittiefe (z.B. 24 Bit)
+    if (sSrc == "flac" && sTgt == "wav")    // keeps the bit depth (e.g. 24 bit)
         return { kFlac, [](const QString& s, const QString& t) { return QStringList{ "-s", "-d", "-o", t, s }; } };
-    if (sSrc == "mp3" && sTgt == "wav")     // unter Windows: madplay
+    if (sSrc == "mp3" && sTgt == "wav")     // on Windows: madplay
         return { kLame, [](const QString& s, const QString& t) { return QStringList{ "--nohist", "--decode", s, t }; } };
     if (sSrc == "wav" && sTgt == "flac")
         return { kFlac, [](const QString& s, const QString& t) { return QStringList{ "-s", "-o", t, s }; } };
-    if (sSrc == "wav" && sTgt == "mp3")     // -V 0 entspricht --preset extreme aus dem Original
+    if (sSrc == "wav" && sTgt == "mp3")     // -V 0 corresponds to --preset extreme from the original
         return { kLame, [](const QString& s, const QString& t) { return QStringList{ "--nohist", "-V", "0", s, t }; } };
-    if (sSrc == "aac" && sTgt == "m4a")     // nur umverpacken -> verlustfrei
+    if (sSrc == "aac" && sTgt == "m4a")     // repackage only -> lossless
         return { kFFmpeg, FFmpeg({ "-c:a", "copy", "-movflags", "+faststart" }), {}, "M4A", 0 };
 
-    // Alle übrigen Kombinationen über ffmpeg
-    if (sTgt == "flac")     // Quellen hier nur AAC/MP3 (verlustbehaftet dekodiert) -> 16 Bit genügen
+    // All remaining combinations via ffmpeg
+    if (sTgt == "flac")     // sources here are only AAC/MP3 (lossy decoded) -> 16 bit is sufficient
         return { kFFmpeg, FFmpeg({ "-c:a", "flac", "-sample_fmt", "s16" }) };
-    if (sTgt == "mp3")      // -q:a 0 = VBR V0 (wie lame -V 0)
+    if (sTgt == "mp3")      // -q:a 0 = VBR V0 (like lame -V 0)
         return { kFFmpeg, FFmpeg({ "-c:a", "libmp3lame", "-q:a", "0" }) };
     if (sTgt == "aac")
         return { kFFmpeg, FFmpeg({ "-c:a", "aac", "-b:a", "256k" }) };
     if (sTgt == "m4a")
         return { kFFmpeg, FFmpeg({ "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart" }) };
-    return { kFFmpeg, FFmpeg({ "-c:a", "pcm_s16le" }) };   // wav (wird oben bereits vollständig abgedeckt)
+    return { kFFmpeg, FFmpeg({ "-c:a", "pcm_s16le" }) };   // wav (already fully covered above)
 }
 
 // ------------------------------------------------------------------------------------- Video
@@ -185,7 +185,7 @@ const QList<STargetVariant> kVideoTargets = {
 
 SCommand VideoCommand(const QString& /*sSrc*/, const QString& /*sTgt*/)
 {
-    // Audiospur ohne Re-Encoding in einen M4A-Container kopieren
+    // Copy the audio track into an M4A container without re-encoding
     return { kFFmpeg, FFmpeg({ "-c:a", "copy", "-movflags", "+faststart" }) };
 }
 
@@ -200,7 +200,7 @@ void AddCategory(QList<SConversion>& aOut, EMediaCategory eCategory,
 
         for (const STargetVariant& tgt : aTargets) {
             if (tgt.sFormatKey == src.sKey)
-                continue;   // kein Ziel = Quellformat
+                continue;   // no target = source format
 
             SCommand cmd = fnCommand(src.sKey, tgt.sKey);
 

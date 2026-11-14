@@ -6,14 +6,14 @@
 #include <QTimer>
 
 namespace {
-constexpr qsizetype kMaxOutputBytes = 64 * 1024;   // nur das Ende der Prozessausgabe aufheben
-constexpr int       kMaxOutputLines = 5;           // Zeilen davon im Fehlerbericht
+constexpr qsizetype kMaxOutputBytes = 64 * 1024;   // keep only the tail of the process output
+constexpr int       kMaxOutputLines = 5;           // number of those lines in the error report
 constexpr int       kKillTimeoutMs  = 3000;
 
 bool PathOccupied(const QString& sPath)
 {
     const QFileInfo fi(sPath);
-    return fi.exists() || fi.isSymLink();   // auch "kaputte" Symlinks nicht überschreiben
+    return fi.exists() || fi.isSymLink();   // do not overwrite "broken" symlinks either
 }
 } // namespace
 
@@ -38,7 +38,7 @@ void CConverter::Start()
     }
     emit StatsChanged();
 
-    // Erst zurück in die Ereignisschleife, damit der Dialog seinen Zustand vollständig setzen kann
+    // Return to the event loop first so the dialog can fully set up its state
     QTimer::singleShot(0, this, &CConverter::ProcessNext);
 }
 
@@ -69,7 +69,7 @@ void CConverter::Abort()
         delete m_pProcess;
         m_pProcess = nullptr;
 
-        // Die Zieldatei existierte vor dem Start nachweislich nicht -> Fragment entfernen
+        // The target file verifiably did not exist before starting -> remove the fragment
         if (!m_sCurrentTarget.isEmpty() && PathOccupied(m_sCurrentTarget))
             QFile::remove(m_sCurrentTarget);
     }
@@ -129,7 +129,7 @@ void CConverter::ProcessNext()
         connect(m_pProcess, &QProcess::finished, this, &CConverter::OnProcessFinished);
         connect(m_pProcess, &QProcess::errorOccurred, this, &CConverter::OnProcessError);
         m_pProcess->start(m_conversion.sProgram, m_conversion.fnArgs(sSource, sTarget));
-        return;     // weiter geht's in OnProcessFinished()/OnProcessError()
+        return;     // continues in OnProcessFinished()/OnProcessError()
     }
 
     m_bFinished = true;
@@ -162,7 +162,7 @@ void CConverter::OnProcessFinished(int nExitCode, QProcess::ExitStatus eStatus)
 
 void CConverter::OnProcessError(QProcess::ProcessError eError)
 {
-    // Alle anderen Fehlerarten enden ebenfalls in finished() und werden dort behandelt
+    // All other error types also end in finished() and are handled there
     if (eError == QProcess::FailedToStart && m_pProcess)
         CompleteCurrent(false, tr("%1 could not be started: %2").arg(m_conversion.sProgram, m_pProcess->errorString()));
 }
@@ -183,7 +183,7 @@ void CConverter::CompleteCurrent(bool bSuccess, const QString& sDetails)
         ++m_stats.nFilesProcessed;
         m_stats.nSizeCreated += QFileInfo(m_sCurrentTarget).size();
 
-        // Keine Fehler -> Quelldatei löschen
+        // No errors -> delete the source file
         const qint64 nSourceSize = fiSource.size();
         QFile fSource(m_sCurrentSource);
         if (fSource.remove())
@@ -192,7 +192,7 @@ void CConverter::CompleteCurrent(bool bSuccess, const QString& sDetails)
             AddError(tr("Could not delete '%1': %2").arg(m_sCurrentSource, fSource.errorString()));
     }
     else {
-        // Beschädigte Zieldatei aufräumen, falls angelegt
+        // Clean up the damaged target file, if created
         if (PathOccupied(m_sCurrentTarget))
             QFile::remove(m_sCurrentTarget);
 

@@ -3,8 +3,8 @@
 
 #include <QLabel>
 
-// Einzeiliges Label, das zu lange Texte (z.B. Dateinamen) mittig mit "…" kürzt,
-// statt den Dialog zu verbreitern. Der vollständige Text steht im Tooltip.
+// Single-line label that elides overly long texts (e.g. file names) in the middle with "…"
+// instead of widening the dialog. The full text is shown in the tooltip.
 class CElidedLabel : public QLabel
 {
 public:

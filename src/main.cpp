@@ -16,8 +16,8 @@
 
 namespace {
 
-// Übergebene Pfade auflösen: Dateien direkt, Ordner werden nach Dateien durchsucht
-// (wie "loop,files,%param%\*.*" im AHK-Script; mit --recursive auch Unterordner wie in den Bash-Scripts).
+// Resolve the given paths: files directly, folders are searched for files
+// (like "loop,files,%param%\*.*" in the AHK script; with --recursive also subfolders, as in the Bash scripts).
 QStringList CollectFiles(const QStringList& aArgs, bool bRecursive)
 {
     QCollator collator;
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     QApplication::setDesktopFileName(QStringLiteral("mkConversions"));
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/mkConversions.svg")));
 
-    // Übersetzungen: eigene + Qt (für Standard-Buttons wie Ja/Nein)
+    // Translations: our own + Qt's (for standard buttons like Yes/No)
     QTranslator translatorQt;
     if (translatorQt.load(QLocale::system(), QStringLiteral("qtbase"), QStringLiteral("_"),
                           QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
                                  QStringLiteral("<paths...>"));
     parser.process(app);
 
-    // Ohne Argumente gibt es nichts zu tun (ExitApp im Original)
+    // Without arguments there is nothing to do (ExitApp in the original)
     const QStringList aArgs = parser.positionalArguments();
     if (aArgs.isEmpty()) {
         std::fputs(qPrintable(parser.helpText()), stderr);

@@ -7,40 +7,40 @@
 
 #include <functional>
 
-// Medienkategorie = eine Spalte im Dialog
+// Media category = one column in the dialog
 enum class EMediaCategory {
     Image,
     Audio,
     Video
 };
 
-// Eine Konvertierung von genau einem Quellformat in genau eine Zielvariante.
-// Im Dialog bildet jedes Quellformat eine Zeile ("PNG  ->"), die zugehörigen
-// Konvertierungen erscheinen in deren Ziel-DropDown-Liste.
+// A conversion from exactly one source format to exactly one target variant.
+// In the dialog, each source format forms one row ("PNG  ->"); the associated
+// conversions appear in that row's target drop-down list.
 struct SConversion {
-    QString         sId;                // z.B. "PNG_to_JXL" (Diagnose/Tests)
+    QString         sId;                // e.g. "PNG_to_JXL" (diagnostics/tests)
     EMediaCategory  eCategory = EMediaCategory::Image;
-    QString         sSourceName;        // Anzeigename des Quellformats, z.B. "PNG" (= Zeile im Dialog)
-    QStringList     aSourceExts;        // Quell-Endungen, kleingeschrieben, ohne Punkt
-    QString         sTargetLabel;       // Eintrag in der DropDown-Liste, z.B. "JXL (Q96)"
-    QString         sTargetExt;         // Ziel-Endung, kleingeschrieben, ohne Punkt
-    bool            bLossy = true;      // Qualitätsverlust -> rote Schrift + Sicherheitsabfrage (Standard: sicherheitshalber verlustbehaftet)
-    QString         sProgram;           // auszuführendes Programm (wird im PATH gesucht)
+    QString         sSourceName;        // display name of the source format, e.g. "PNG" (= row in the dialog)
+    QStringList     aSourceExts;        // source extensions, lowercase, without dot
+    QString         sTargetLabel;       // entry in the drop-down list, e.g. "JXL (Q96)"
+    QString         sTargetExt;         // target extension, lowercase, without dot
+    bool            bLossy = true;      // quality loss -> red text + confirmation prompt (defaults to lossy to be on the safe side)
+    QString         sProgram;           // program to run (looked up in PATH)
     std::function<QStringList(const QString& sSource, const QString& sTarget)> fnArgs;
-    // Optionale Vorab-Prüfung der Quelldatei: leerer String = OK, sonst Grund fürs Überspringen
+    // Optional pre-check of the source file: empty string = OK, otherwise the reason for skipping it
     std::function<QString(const QString& sSource)> fnCheckSource = {};
-    // Zusätzlich benötigte Programme (z.B. für fnCheckSource)
+    // Additionally required programs (e.g. for fnCheckSource)
     QStringList     aHelperPrograms = {};
 
     bool AcceptsSuffix(const QString& sSuffix) const { return aSourceExts.contains(sSuffix.toLower()); }
     QString TargetPathFor(const QString& sSourcePath) const;
 };
 
-// Alle bekannten Konvertierungen; gruppiert nach Kategorie und Quellformat, innerhalb
-// eines Quellformats in der Reihenfolge der DropDown-Liste (verlustfreie Ziele zuerst).
+// All known conversions; grouped by category and source format, and within a
+// source format in drop-down list order (lossless targets first).
 const QList<SConversion>& AllConversions();
 
-// Byte-Angabe in lesbarer Form (Ersatz für String_AutoByteFormat() aus dem AHK-Script)
+// Byte count in human-readable form (replacement for String_AutoByteFormat() from the AHK script)
 QString FormatBytes(qint64 nBytes);
 
 #endif // CONVERSIONS_H

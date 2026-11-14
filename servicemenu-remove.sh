@@ -1,5 +1,5 @@
 #!/bin/bash
-# Entfernt die Dolphin-Kontextmenüs wieder.
+# Removes the Dolphin context menus again.
 
 rm -f "$HOME/.local/share/kio/servicemenus/local.mkconversions.desktop"
 rm -f "$HOME/.local/share/kio/servicemenus/local.mkconversions-recursive.desktop"

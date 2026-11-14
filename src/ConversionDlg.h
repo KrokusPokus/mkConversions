@@ -16,12 +16,12 @@ class QPushButton;
 class QRadioButton;
 struct SConversion;
 
-// Hauptdialog (entspricht "Gui,2" im AHK-Script):
-//  - eine Spalte je Medienkategorie, die in den übergebenen Dateien vorkommt
-//  - je Quellformat, das in den Dateien vorkommt, eine Zeile: Dateianzahl + Radio-Button ("PNG") + Pfeil
-//    + DropDown-Liste mit allen Zielformaten der Kategorie (rot, wenn Qualität verloren geht)
-//  - Start/Pause/Continue/Close-Button oben rechts
-//  - zwei Statuszeilen (aktuelle Datei, Fortschritt und Größenbilanz)
+// Main dialog (corresponds to "Gui,2" in the AHK script):
+//  - one column per media category present in the given files
+//  - one row per source format present in the files: file count + radio button ("PNG") + arrow
+//    + drop-down list with all target formats of the category (red if quality is lost)
+//  - Start/Pause/Continue/Close button in the top right corner
+//  - two status lines (current file, progress and size balance)
 class CConversionDlg : public QDialog
 {
     Q_OBJECT
@@ -30,7 +30,7 @@ public:
     explicit CConversionDlg(const QStringList& aFiles, QWidget* pParent = nullptr);
     ~CConversionDlg() override;
 
-    // true, wenn mindestens eine Spalte angezeigt wird (sonst gibt es nichts zu tun)
+    // true if at least one column is shown (otherwise there is nothing to do)
     bool HasAnyConversion() const { return !m_aRows.isEmpty(); }
 
 public slots:
@@ -41,11 +41,11 @@ protected:
 
 private:
     enum class EState {
-        Idle,               // Modus noch nicht gewählt
-        Running,            // Konvertierung läuft
-        PauseRequested,     // Pause angefordert, aktuelle Datei läuft noch
-        Paused,             // pausiert zwischen zwei Dateien
-        Finished            // fertig -> Button schließt den Dialog
+        Idle,               // mode not selected yet
+        Running,            // conversion running
+        PauseRequested,     // pause requested, current file still running
+        Paused,             // paused between two files
+        Finished            // done -> button closes the dialog
     };
 
     void BuildUi(const QHash<QString, int>& aSuffixCounts);
@@ -58,12 +58,12 @@ private:
     void UpdateRowColor(qsizetype nRow);
     const SConversion* SelectedConversion() const;
 
-    // Eine Zeile im Dialog = ein Quellformat
+    // One row in the dialog = one source format
     struct SRow {
-        QLabel*       pCount = nullptr;      // "(123 files)", rechtsbündig
+        QLabel*       pCount = nullptr;      // "(123 files)", right-aligned
         QRadioButton* pRadio = nullptr;
-        QLabel*       pArrow = nullptr;      // eigenes Label, damit der Pfeil größer dargestellt werden kann
-        QComboBox*    pTargets = nullptr;    // Item-Daten: Index in AllConversions()
+        QLabel*       pArrow = nullptr;      // separate label so the arrow can be drawn larger
+        QComboBox*    pTargets = nullptr;    // item data: index into AllConversions()
     };
 
     QStringList            m_aFiles;

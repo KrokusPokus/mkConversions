@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(mkConversions VERSION 1.0.0 LANGUAGES CXX)
 
-# C++20 Standard erzwingen
+# Enforce the C++20 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -64,7 +64,7 @@ target_link_libraries(mkConversions PRIVATE
     Qt6::Widgets
 )
 
-# Beschleunigt den Start unter Linux, indem ungenutzte Shared Libraries ignoriert werden
+# Speeds up startup on Linux by ignoring unused shared libraries
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(mkConversions PRIVATE -Wl,--as-needed)
 endif()

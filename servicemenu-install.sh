@@ -1,9 +1,9 @@
 #!/bin/bash
-# Installiert die Dolphin-Kontextmenüs für den aktuellen Benutzer:
-#   - "Formate konvertieren"                    (Dateien und Ordner)
-#   - "Formate konvertieren (inkl. Unterordner)" (nur Ordner)
-# Zwei getrennte .desktop-Dateien, da MimeType= für alle Actions einer Datei gemeinsam gilt.
-# Voraussetzung: mkConversions wurde gebaut (build.sh kopiert es nach ~/.local/bin).
+# Installs the Dolphin context menus for the current user:
+#   - "Formate konvertieren"                    (files and folders)
+#   - "Formate konvertieren (inkl. Unterordner)" (folders only)
+# Two separate .desktop files, because MimeType= applies to all actions of a file.
+# Prerequisite: mkConversions has been built (build.sh copies it to ~/.local/bin).
 
 set -e
 cd "$(dirname "$0")"
