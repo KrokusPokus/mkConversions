@@ -6,6 +6,7 @@
 
 #include <QButtonGroup>
 #include <QComboBox>
+#include <QDir>
 #include <QEvent>
 #include <QFileInfo>
 #include <QFontDatabase>
@@ -37,6 +38,14 @@ const QString     kSettingsLastTargetGroup = QStringLiteral("LastTarget");
 // at 150 % its stroke width roughly matches that of the font.
 const QString     kArrow         = QStringLiteral("\u2192");
 constexpr double  kArrowScale    = 1.5;
+
+// ~/.config/mkProjects/mkConversions.conf
+QString SettingsFilePath()
+{
+    const QString sConfigDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)).filePath(QStringLiteral("mkProjects"));
+    QDir().mkpath(sConfigDir);
+    return QDir(sConfigDir).filePath(QStringLiteral("mkConversions.conf"));
+}
 
 QColor LossyTextColor(const QPalette& palette)
 {
@@ -217,7 +226,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
 // Preselect the last used target of each source format (if it still exists)
 void CConversionDlg::RestoreLastTargets()
 {
-    QSettings settings;
+    QSettings settings(SettingsFilePath(), QSettings::IniFormat);
     settings.beginGroup(kSettingsLastTargetGroup);
     const QList<SConversion>& aConversions = AllConversions();
     for (const SRow& row : std::as_const(m_aRows)) {
@@ -239,7 +248,7 @@ void CConversionDlg::RestoreLastTargets()
 
 void CConversionDlg::SaveLastTarget(const SConversion& conv)
 {
-    QSettings settings;
+    QSettings settings(SettingsFilePath(), QSettings::IniFormat);
     settings.beginGroup(kSettingsLastTargetGroup);
     settings.setValue(conv.sSourceName, conv.sId);
     settings.endGroup();
