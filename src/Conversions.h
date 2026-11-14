@@ -19,12 +19,12 @@ enum class EMediaCategory {
 // Konvertierungen erscheinen in deren Ziel-DropDown-Liste.
 struct SConversion {
     QString         sId;                // z.B. "PNG_to_JXL" (Diagnose/Tests)
-    EMediaCategory  eCategory;
+    EMediaCategory  eCategory = EMediaCategory::Image;
     QString         sSourceName;        // Anzeigename des Quellformats, z.B. "PNG" (= Zeile im Dialog)
     QStringList     aSourceExts;        // Quell-Endungen, kleingeschrieben, ohne Punkt
     QString         sTargetLabel;       // Eintrag in der DropDown-Liste, z.B. "JXL (Q96)"
     QString         sTargetExt;         // Ziel-Endung, kleingeschrieben, ohne Punkt
-    bool            bLossy;             // Qualitätsverlust -> rote Schrift + Sicherheitsabfrage
+    bool            bLossy = true;      // Qualitätsverlust -> rote Schrift + Sicherheitsabfrage (Standard: sicherheitshalber verlustbehaftet)
     QString         sProgram;           // auszuführendes Programm (wird im PATH gesucht)
     std::function<QStringList(const QString& sSource, const QString& sTarget)> fnArgs;
     // Optionale Vorab-Prüfung der Quelldatei: leerer String = OK, sonst Grund fürs Überspringen
