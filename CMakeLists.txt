@@ -82,12 +82,13 @@ install(FILES res/mkConversions.svg
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 )
 
-if(LINUX)
-    add_custom_command(TARGET mkConversions POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:mkConversions>
-            $ENV{HOME}/.local/bin/mkConversions
-
-        COMMENT "Copying mkConversions to ~/.local/bin/"
+# Dolphin context menus ("Convert formats", "... including subfolders"): fill in @EXEC@/@ICON@ and install them
+# system-wide, where KIO also accepts them without the executable bit
+set(EXEC mkConversions)
+set(ICON mkConversions)
+foreach(menu local.mkconversions.desktop local.mkconversions-recursive.desktop)
+    configure_file(res/${menu} ${CMAKE_CURRENT_BINARY_DIR}/servicemenus/${menu} @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/servicemenus/${menu}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/kio/servicemenus
     )
-endif()
+endforeach()

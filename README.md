@@ -61,13 +61,20 @@ Arch packages: `imagemagick` (with libjxl/libwebp), `libjxl` (for `jxlinfo`, `cj
 ## Building
 
 ```
-./build.sh            # builds into build/bin/ and copies to ~/.local/bin/
+./build.sh            # builds into build/bin/
 ./build_lupdate.sh    # updates i18n/*.ts
+```
+
+Install system-wide as an Arch package (builds the current state from GitHub):
+
+```
+cd packaging/arch && makepkg -si
 ```
 
 ## Dolphin context menu
 
-```
-./servicemenu-install.sh   # "Convert formats" (files + folders), "… (including subfolders)" (folders only)
-./servicemenu-remove.sh
-```
+The package installs two entries into `/usr/share/kio/servicemenus/`: "Convert formats" (files + folders) and "… (including subfolders)" (folders only).
+
+## License
+
+GPL-3.0-only, see [LICENSE](LICENSE).
