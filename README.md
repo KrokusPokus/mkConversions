@@ -1,7 +1,11 @@
 # mkConversions
 
-Small Qt6 dialog for converting image, audio and video files between formats.
-Linux port of the former AutoHotkey v1.1 script `Conversions.ahk`.
+A small Qt6 dialog for batch-converting image, audio and video files between formats, with a Dolphin
+context menu entry. It is a Linux port of the former AutoHotkey v1.1 script `Conversions.ahk`.
+
+> **Note:** after a successful conversion the **source file is deleted**. See [Usage](#usage) for the safeguards.
+
+![screenshot](images/screenshot.webp)
 
 ## Usage
 
@@ -10,7 +14,7 @@ mkConversions [-r|--recursive] <files and/or folders...>
 ```
 
 - Folders are searched for files (with `-r` also subfolders).
-- The dialog shows only the columns (image/audio/video) and source formats (file extensions) that occur in the given
+- The dialog only shows the columns (image/audio/video) and source formats (file extensions) that occur in the given
   files. For each source format there is a row `( ) PNG -> [target format ▾]`; the list contains all
   formats of the category except the source format (lossless ones first). If a lossy target is selected,
   the row turns **red** and the start has to be confirmed.
@@ -56,18 +60,37 @@ would otherwise take over only the first frame or write several individual files
 Extensions are recognized case-insensitively; `.jpeg` counts as JPG.
 A conversion is only considered successful if the tool exits with code 0 **and** a non-empty target file exists.
 
-Arch packages: `imagemagick` (with libjxl/libwebp), `libjxl` (for `jxlinfo`, `cjxl`), `ffmpeg`, `flac`, `lame`, `faad2`.
+## Requirements
 
-## Building
+- Qt ≥ 6.5 (Core, Widgets, LinguistTools), CMake ≥ 3.19 and a C++ compiler
+- At runtime, the external tools used for the conversions. Only the tools for the formats you actually convert
+  are needed.
 
+On Arch Linux:
+
+```bash
+sudo pacman -S --needed base-devel cmake qt6-base qt6-tools              # build
+sudo pacman -S --needed imagemagick libjxl libwebp ffmpeg flac lame faad2  # runtime tools
 ```
-./build.sh            # builds into build/bin/
-./build_lupdate.sh    # updates i18n/*.ts
+
+## Building and installing
+
+```bash
+git clone https://github.com/KrokusPokus/mkConversions.git
+cd mkConversions
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build --parallel
+sudo cmake --install build                   # installs system-wide
+sudo xargs rm < build/install_manifest.txt   # uninstalls again
 ```
+
+For development, `./build.sh` builds into `build/bin/` without installing, and `./build_lupdate.sh` updates the
+translation sources in `i18n/*.ts`.
 
 ## Dolphin context menu
 
-The package installs two entries into `/usr/share/kio/servicemenus/`: "Convert formats" (files + folders) and "… (including subfolders)" (folders only).
+`cmake --install` adds two entries to `<prefix>/share/kio/servicemenus/`: *Convert formats* (files and folders) and
+*… (including subfolders)* (folders only).
 
 ## License
 
