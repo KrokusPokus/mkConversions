@@ -13,7 +13,8 @@ context menu entry. It is a Linux port of the former AutoHotkey v1.1 script `Con
 mkConversions [-r|--recursive] <files and/or folders...>
 ```
 
-- Folders are searched for files (with `-r` also subfolders).
+- Folders are searched for files. If at least one folder was given, the dialog shows an **Include subfolders**
+  checkbox (off by default, `-r` turns it on initially); toggling it re-reads the folders and updates the dialog.
 - The dialog only shows the columns (image/audio/video) and source formats (file extensions) that occur in the given
   files. For each source format there is a row `( ) PNG -> [target format ▾]`; the list contains all
   formats of the category except the source format (lossless ones first). If a lossy target is selected,
@@ -89,8 +90,8 @@ translation sources in `i18n/*.ts`.
 
 ## Dolphin context menu
 
-`cmake --install` adds two entries to `<prefix>/share/kio/servicemenus/`: *Convert formats* (files and folders) and
-*… (including subfolders)* (folders only).
+`cmake --install` adds the entry *Convert formats* (files and folders) to `<prefix>/share/kio/servicemenus/`.
+Subfolders are included via the checkbox in the dialog.
 
 ## License
 

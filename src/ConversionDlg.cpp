@@ -5,11 +5,13 @@
 #include "ElidedLabel.h"
 
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDir>
 #include <QEvent>
 #include <QFileInfo>
 #include <QFontDatabase>
+#include <QGuiApplication>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -20,6 +22,7 @@
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
+#include <algorithm>
 #include <array>
 
 namespace {
@@ -27,7 +30,7 @@ constexpr int kMargin            = 20;
 constexpr int kColumnMinWidth    = 150;
 constexpr int kRadioSpacing      = 10;
 constexpr int kGroupSpacing      = 20;
-constexpr int kStatusMinWidth    = 428;
+constexpr int kStatusMinWidth    = 328;   // + gap + button = previous minimum width
 constexpr int kButtonWidth       = 80;
 constexpr int kButtonHeight      = 40;
 
@@ -52,47 +55,66 @@ QColor LossyTextColor(const QPalette& palette)
     // Pure red is hard to read on a dark background
     return palette.color(QPalette::Window).lightness() < 128 ? QColor(0xff, 0x6b, 0x6b) : QColor(0xd0, 0x00, 0x00);
 }
+
+// Select the item with the given conversion id in the target list (if it exists)
+void SelectTarget(QComboBox* pTargets, const QString& sId)
+{
+    const QList<SConversion>& aConversions = AllConversions();
+    for (int nItem = 0; nItem < pTargets->count(); ++nItem) {
+        if (aConversions.at(pTargets->itemData(nItem).toInt()).sId == sId) {
+            pTargets->setCurrentIndex(nItem);   // also updates the row color
+            return;
+        }
+    }
+}
+
+// Source format name of a row (all items of a row share the same source format)
+QString RowSourceName(const QComboBox* pTargets)
+{
+    return pTargets->count() > 0 ? AllConversions().at(pTargets->itemData(0).toInt()).sSourceName : QString();
+}
 } // namespace
 
-CConversionDlg::CConversionDlg(const QStringList& aFiles, QWidget* pParent)
+CConversionDlg::CConversionDlg(const QStringList& aPaths, bool bRecursive, QWidget* pParent)
     : QDialog(pParent)
-    , m_aFiles(aFiles)
+    , m_aPaths(aPaths)
 {
     setWindowTitle(tr("Format Conversion"));
     setWindowFlag(Qt::WindowMinimizeButtonHint, true);
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
-    // Determine the existing extensions
-    QHash<QString, int> aSuffixCounts;
-    for (const QString& sPath : aFiles)
-        ++aSuffixCounts[QFileInfo(sPath).suffix().toLower()];
-
-    BuildUi(aSuffixCounts);
+    m_aFiles = CollectFiles(m_aPaths, bRecursive);
+    BuildUi(bRecursive);
 }
 
 CConversionDlg::~CConversionDlg() = default;
 
-void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
+bool CConversionDlg::CanToggleRecursive() const
+{
+    return m_pRecursiveCheck != nullptr;
+}
+
+void CConversionDlg::BuildUi(bool bRecursive)
 {
     auto* pMainLayout = new QVBoxLayout(this);
     pMainLayout->setContentsMargins(kMargin, kMargin, kMargin, kMargin);
-    pMainLayout->setSizeConstraint(QLayout::SetFixedSize);   // not resizable
+    pMainLayout->setSizeConstraint(QLayout::SetFixedSize);   // not resizable; follows the content when the columns change
 
-    auto* pTopLayout = new QHBoxLayout();
-    pTopLayout->setSpacing(0);
-    pMainLayout->addLayout(pTopLayout);
+    m_pTopLayout = new QHBoxLayout();
+    m_pTopLayout->setSpacing(0);
+    pMainLayout->addLayout(m_pTopLayout);
 
     // Fonts: headings bold and slightly larger, format rows in a fixed-width font
-    QFont fontHeading = font();
-    fontHeading.setBold(true);
-    if (fontHeading.pointSizeF() > 0)
-        fontHeading.setPointSizeF(fontHeading.pointSizeF() + 1.0);
-    const QFont fontFixed = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-    QFont fontArrow = fontFixed;
-    if (fontArrow.pointSizeF() > 0)
-        fontArrow.setPointSizeF(fontArrow.pointSizeF() * kArrowScale);
+    m_fontHeading = font();
+    m_fontHeading.setBold(true);
+    if (m_fontHeading.pointSizeF() > 0)
+        m_fontHeading.setPointSizeF(m_fontHeading.pointSizeF() + 1.0);
+    m_fontFixed = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    m_fontArrow = m_fontFixed;
+    if (m_fontArrow.pointSizeF() > 0)
+        m_fontArrow.setPointSizeF(m_fontArrow.pointSizeF() * kArrowScale);
     else
-        fontArrow.setPixelSize(qRound(fontArrow.pixelSize() * kArrowScale));
+        m_fontArrow.setPixelSize(qRound(m_fontArrow.pixelSize() * kArrowScale));
 
     m_paletteNormal = palette();
     m_paletteLossy  = palette();
@@ -106,8 +128,78 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
     m_pRadioGroup = new QButtonGroup(this);
     m_pRadioGroup->setExclusive(true);
 
-    const std::array<EMediaCategory, 3> aCategories = { EMediaCategory::Image, EMediaCategory::Audio, EMediaCategory::Video };
+    // Top row: [columns] <stretch>; the columns are inserted by BuildColumns()
+    m_pTopLayout->addStretch(1);
+
+    // Bottom row: [checkbox + status lines] [Start] (button in the bottom right corner)
+    pMainLayout->addSpacing(kGroupSpacing);
+    auto* pBottomLayout = new QHBoxLayout();
+    pBottomLayout->setSpacing(kMargin);
+    pMainLayout->addLayout(pBottomLayout);
+    auto* pStatusLayout = new QVBoxLayout();
+    pStatusLayout->setSpacing(0);
+    pBottomLayout->addLayout(pStatusLayout, 1);
+
+    // Subfolders can only be included if at least one folder was given
+    const bool bAnyFolder = std::any_of(m_aPaths.cbegin(), m_aPaths.cend(), [](const QString& sPath) { return QFileInfo(sPath).isDir(); });
+    if (bAnyFolder) {
+        m_pRecursiveCheck = new QCheckBox(tr("Include subfolders"), this);
+        m_pRecursiveCheck->setChecked(bRecursive);
+        connect(m_pRecursiveCheck, &QCheckBox::toggled, this, &CConversionDlg::OnRecursiveToggled);
+        pStatusLayout->addWidget(m_pRecursiveCheck);
+        pStatusLayout->addSpacing(kGroupSpacing);
+    }
+
+    // Status lines
+    m_pInfoLine1 = new CElidedLabel(this);
+    m_pInfoLine2 = new CElidedLabel(this);
+    m_pInfoLine1->setMinimumWidth(kStatusMinWidth);
+    m_pInfoLine2->setMinimumWidth(kStatusMinWidth);
+    pStatusLayout->addStretch(1);
+    pStatusLayout->addWidget(m_pInfoLine1);
+    pStatusLayout->addSpacing(kRadioSpacing);
+    pStatusLayout->addWidget(m_pInfoLine2);
+
+    m_pStartPauseButton = new QPushButton(tr("Start"), this);
+    m_pStartPauseButton->setFont(m_fontHeading);
+    m_pStartPauseButton->setFixedSize(kButtonWidth, kButtonHeight);
+    m_pStartPauseButton->setDefault(true);
+    connect(m_pStartPauseButton, &QPushButton::clicked, this, &CConversionDlg::OnStartPause);
+    pBottomLayout->addWidget(m_pStartPauseButton, 0, Qt::AlignBottom | Qt::AlignRight);
+
+    BuildColumns();
+}
+
+// (Re)creates the columns for the files in m_aFiles. On a rebuild the selected row and the
+// selected targets are kept where the source format still exists.
+void CConversionDlg::BuildColumns()
+{
     const QList<SConversion>& aConversions = AllConversions();
+
+    QHash<QString, QString> aCurrentTargets;   // source format name -> conversion id
+    QString sCheckedSource;
+    for (const SRow& row : std::as_const(m_aRows)) {
+        const QString sSourceName = RowSourceName(row.pTargets);
+        if (row.pTargets->currentIndex() >= 0)
+            aCurrentTargets.insert(sSourceName, aConversions.at(row.pTargets->currentData().toInt()).sId);
+        if (row.pRadio->isChecked())
+            sCheckedSource = sSourceName;
+        m_pRadioGroup->removeButton(row.pRadio);
+    }
+    m_aRows.clear();
+    delete m_pColumns;
+
+    // Determine the existing extensions
+    QHash<QString, int> aSuffixCounts;
+    for (const QString& sPath : std::as_const(m_aFiles))
+        ++aSuffixCounts[QFileInfo(sPath).suffix().toLower()];
+
+    m_pColumns = new QWidget(this);
+    auto* pColumnsLayout = new QHBoxLayout(m_pColumns);
+    pColumnsLayout->setContentsMargins(0, 0, 0, 0);
+    pColumnsLayout->setSpacing(0);
+
+    const std::array<EMediaCategory, 3> aCategories = { EMediaCategory::Image, EMediaCategory::Audio, EMediaCategory::Video };
 
     // Number of given files per source format (e.g. .jpg + .jpeg)
     auto sourceCount = [&aSuffixCounts](const SConversion& conv) {
@@ -126,7 +218,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
         if (!bCategoryPresent)
             continue;
 
-        auto* pColumn = new QWidget(this);
+        auto* pColumn = new QWidget(m_pColumns);
         pColumn->setMinimumWidth(kColumnMinWidth);
         auto* pColumnLayout = new QVBoxLayout(pColumn);
         pColumnLayout->setContentsMargins(0, 0, kMargin, 0);
@@ -139,7 +231,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
             case EMediaCategory::Video: sHeading = tr("Video formats"); break;
         }
         auto* pHeading = new QLabel(sHeading, pColumn);
-        pHeading->setFont(fontHeading);
+        pHeading->setFont(m_fontHeading);
         pColumnLayout->addWidget(pHeading);
         pColumnLayout->addSpacing(kRadioSpacing + 4);
 
@@ -152,6 +244,7 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
         // Show only source formats that occur in the given files.
         // AllConversions() is grouped by source format -> new row on every change.
         QString sCurrentSource;
+        int nGridRow = 0;
         for (qsizetype i = 0; i < aConversions.size(); ++i) {
             const SConversion& conv = aConversions.at(i);
             if (conv.eCategory != eCategory || !sourcePresent(conv))
@@ -162,24 +255,25 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
 
                 SRow row;
                 row.pCount = new QLabel(tr("(%n file(s))", nullptr, sourceCount(conv)), pColumn);
-                row.pCount->setFont(fontFixed);
+                row.pCount->setFont(m_fontFixed);
                 row.pCount->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 row.pCount->installEventFilter(this);   // a click selects the row
                 row.pRadio = new QRadioButton(conv.sSourceName.leftJustified(4), pColumn);
-                row.pRadio->setFont(fontFixed);
+                row.pRadio->setFont(m_fontFixed);
                 row.pArrow = new QLabel(kArrow, pColumn);
-                row.pArrow->setFont(fontArrow);
+                row.pArrow->setFont(m_fontArrow);
                 row.pArrow->installEventFilter(this);   // a click on the arrow selects the row
                 row.pTargets = new QComboBox(pColumn);
-                row.pTargets->setFont(fontFixed);
+                row.pTargets->setFont(m_fontFixed);
                 row.pTargets->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
                 const auto nRow = m_aRows.size();
                 m_pRadioGroup->addButton(row.pRadio, static_cast<int>(nRow));
-                pGrid->addWidget(row.pCount, static_cast<int>(nRow), 0);
-                pGrid->addWidget(row.pRadio, static_cast<int>(nRow), 1);
-                pGrid->addWidget(row.pArrow, static_cast<int>(nRow), 2, Qt::AlignCenter);
-                pGrid->addWidget(row.pTargets, static_cast<int>(nRow), 3);
+                pGrid->addWidget(row.pCount, nGridRow, 0);
+                pGrid->addWidget(row.pRadio, nGridRow, 1);
+                pGrid->addWidget(row.pArrow, nGridRow, 2, Qt::AlignCenter);
+                pGrid->addWidget(row.pTargets, nGridRow, 3);
+                ++nGridRow;
 
                 // Selecting an item in the list also selects the row
                 connect(row.pTargets, &QComboBox::activated, row.pRadio, [pRadio = row.pRadio]() { pRadio->setChecked(true); });
@@ -195,32 +289,43 @@ void CConversionDlg::BuildUi(const QHash<QString, int>& aSuffixCounts)
                 pTargets->setItemData(nItem, tr("Lossy: quality will be lost."), Qt::ToolTipRole);
             }
         }
-        for (qsizetype nRow = 0; nRow < m_aRows.size(); ++nRow)
-            UpdateRowColor(nRow);
 
         pColumnLayout->addStretch(1);
-        pTopLayout->addWidget(pColumn, 0, Qt::AlignTop);
+        pColumnsLayout->addWidget(pColumn, 0, Qt::AlignTop);
     }
-    pTopLayout->addStretch(1);
+
+    if (m_aRows.isEmpty()) {
+        auto* pEmpty = new QLabel(tr("No convertible files found."), m_pColumns);
+        pColumnsLayout->addWidget(pEmpty, 0, Qt::AlignTop);
+    }
+
+    for (qsizetype nRow = 0; nRow < m_aRows.size(); ++nRow)
+        UpdateRowColor(nRow);
 
     RestoreLastTargets();
 
-    m_pStartPauseButton = new QPushButton(tr("Start"), this);
-    m_pStartPauseButton->setFont(fontHeading);
-    m_pStartPauseButton->setFixedSize(kButtonWidth, kButtonHeight);
-    m_pStartPauseButton->setDefault(true);
-    connect(m_pStartPauseButton, &QPushButton::clicked, this, &CConversionDlg::OnStartPause);
-    pTopLayout->addWidget(m_pStartPauseButton, 0, Qt::AlignTop | Qt::AlignRight);
+    // Keep the selection made before the rebuild
+    for (const SRow& row : std::as_const(m_aRows)) {
+        const QString sSourceName = RowSourceName(row.pTargets);
+        if (aCurrentTargets.contains(sSourceName))
+            SelectTarget(row.pTargets, aCurrentTargets.value(sSourceName));
+        if (sSourceName == sCheckedSource)
+            row.pRadio->setChecked(true);
+    }
 
-    // Status lines
-    pMainLayout->addSpacing(kGroupSpacing);
-    m_pInfoLine1 = new CElidedLabel(this);
-    m_pInfoLine2 = new CElidedLabel(this);
-    m_pInfoLine1->setMinimumWidth(kStatusMinWidth);
-    m_pInfoLine2->setMinimumWidth(kStatusMinWidth);
-    pMainLayout->addWidget(m_pInfoLine1);
-    pMainLayout->addSpacing(kRadioSpacing);
-    pMainLayout->addWidget(m_pInfoLine2);
+    m_pTopLayout->insertWidget(0, m_pColumns, 0, Qt::AlignTop);
+    m_pStartPauseButton->setEnabled(!m_aRows.isEmpty());
+}
+
+void CConversionDlg::OnRecursiveToggled(bool bRecursive)
+{
+    if (m_eState != EState::Idle)   // the checkbox is disabled once the conversion has started
+        return;
+
+    QGuiApplication::setOverrideCursor(Qt::WaitCursor);   // scanning large folder trees can take a moment
+    m_aFiles = CollectFiles(m_aPaths, bRecursive);
+    BuildColumns();
+    QGuiApplication::restoreOverrideCursor();
 }
 
 // Preselect the last used target of each source format (if it still exists)
@@ -228,20 +333,10 @@ void CConversionDlg::RestoreLastTargets()
 {
     QSettings state(StateFilePath(), QSettings::IniFormat);
     state.beginGroup(kStateLastTargetGroup);
-    const QList<SConversion>& aConversions = AllConversions();
     for (const SRow& row : std::as_const(m_aRows)) {
-        if (row.pTargets->count() == 0)
-            continue;
-        const QString sSourceName = aConversions.at(row.pTargets->itemData(0).toInt()).sSourceName;
-        const QString sLastId = state.value(sSourceName).toString();
-        if (sLastId.isEmpty())
-            continue;
-        for (int nItem = 0; nItem < row.pTargets->count(); ++nItem) {
-            if (aConversions.at(row.pTargets->itemData(nItem).toInt()).sId == sLastId) {
-                row.pTargets->setCurrentIndex(nItem);   // also updates the row color
-                break;
-            }
-        }
+        const QString sLastId = state.value(RowSourceName(row.pTargets)).toString();
+        if (!sLastId.isEmpty())
+            SelectTarget(row.pTargets, sLastId);
     }
     state.endGroup();
 }
@@ -348,6 +443,8 @@ bool CConversionDlg::StartConversion()
         row.pArrow->setEnabled(false);
         row.pTargets->setEnabled(false);
     }
+    if (m_pRecursiveCheck)
+        m_pRecursiveCheck->setEnabled(false);
 
     m_pConverter = new CConverter(m_aFiles, conv, this);
     connect(m_pConverter, &CConverter::CurrentFileChanged, m_pInfoLine1, &CElidedLabel::SetFullText);

@@ -40,6 +40,10 @@ struct SConversion {
 // source format in drop-down list order (lossless targets first).
 const QList<SConversion>& AllConversions();
 
+// Resolve the given paths: files directly, folders are searched for files (with bRecursive also
+// subfolders). Result: absolute paths without duplicates, folder contents sorted naturally.
+QStringList CollectFiles(const QStringList& aPaths, bool bRecursive);
+
 // Byte count in human-readable form
 QString FormatBytes(qint64 nBytes);
 

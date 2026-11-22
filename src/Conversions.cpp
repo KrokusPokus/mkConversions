@@ -1,10 +1,14 @@
 #include "Conversions.h"
 
+#include <QCollator>
 #include <QCoreApplication>
+#include <QDirIterator>
 #include <QFileInfo>
 #include <QLocale>
 #include <QProcess>
+#include <QSet>
 
+#include <algorithm>
 #include <cstdlib>
 
 QString SConversion::TargetPathFor(const QString& sSourcePath) const
@@ -12,6 +16,44 @@ QString SConversion::TargetPathFor(const QString& sSourcePath) const
     const QFileInfo fi(sSourcePath);
     // completeBaseName() strips only the last extension (e.g. "a.tar.gz" -> "a.tar")
     return fi.path() + QLatin1Char('/') + fi.completeBaseName() + QLatin1Char('.') + sTargetExt;
+}
+
+QStringList CollectFiles(const QStringList& aPaths, bool bRecursive)
+{
+    QCollator collator;
+    collator.setNumericMode(true);
+    collator.setCaseSensitivity(Qt::CaseInsensitive);
+
+    QStringList aFiles;
+    QSet<QString> aSeen;
+    auto addFile = [&](const QString& sPath) {
+        const QString sAbs = QFileInfo(sPath).absoluteFilePath();
+        if (!aSeen.contains(sAbs)) {
+            aSeen.insert(sAbs);
+            aFiles.append(sAbs);
+        }
+    };
+
+    for (const QString& sArg : aPaths) {
+        const QFileInfo fi(sArg);
+        if (!fi.exists())
+            continue;
+
+        if (fi.isDir()) {
+            QStringList aDirFiles;
+            QDirIterator it(fi.absoluteFilePath(), QDir::Files | QDir::Hidden | QDir::System,
+                            bRecursive ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
+            while (it.hasNext())
+                aDirFiles.append(it.next());
+            std::sort(aDirFiles.begin(), aDirFiles.end(), collator);
+            for (const QString& sFile : std::as_const(aDirFiles))
+                addFile(sFile);
+        }
+        else {
+            addFile(fi.absoluteFilePath());
+        }
+    }
+    return aFiles;
 }
 
 namespace {

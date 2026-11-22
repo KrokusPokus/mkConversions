@@ -82,13 +82,11 @@ install(FILES res/mkConversions.svg
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 )
 
-# Dolphin context menus ("Convert formats", "... including subfolders"): fill in @EXEC@/@ICON@ and install them
-# system-wide, where KIO also accepts them without the executable bit
+# Dolphin context menu ("Convert formats"): fill in @EXEC@/@ICON@ and install it system-wide,
+# where KIO also accepts it without the executable bit
 set(EXEC mkConversions)
 set(ICON mkConversions)
-foreach(menu local.mkconversions.desktop local.mkconversions-recursive.desktop)
-    configure_file(res/${menu} ${CMAKE_CURRENT_BINARY_DIR}/servicemenus/${menu} @ONLY)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/servicemenus/${menu}
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/kio/servicemenus
-    )
-endforeach()
+configure_file(res/local.mkconversions.desktop ${CMAKE_CURRENT_BINARY_DIR}/servicemenus/local.mkconversions.desktop @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/servicemenus/local.mkconversions.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/kio/servicemenus
+)

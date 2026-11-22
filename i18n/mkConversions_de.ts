@@ -4,27 +4,27 @@
 <context>
     <name>CConversionDlg</name>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="48"/>
+        <location filename="../src/ConversionDlg.cpp" line="82"/>
         <source>Format Conversion</source>
         <translation>Format-Konvertierung</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="124"/>
+        <location filename="../src/ConversionDlg.cpp" line="219"/>
         <source>Image formats</source>
         <translation>Bild-Formate</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="125"/>
+        <location filename="../src/ConversionDlg.cpp" line="220"/>
         <source>Audio formats</source>
         <translation>Audio-Formate</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="126"/>
+        <location filename="../src/ConversionDlg.cpp" line="221"/>
         <source>Video formats</source>
         <translation>Video-Formate</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/ConversionDlg.cpp" line="151"/>
+        <location filename="../src/ConversionDlg.cpp" line="247"/>
         <source>(%n file(s))</source>
         <translation>
             <numerusform>(%n Datei)</numerusform>
@@ -32,35 +32,45 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="182"/>
-        <location filename="../src/ConversionDlg.cpp" line="221"/>
+        <location filename="../src/ConversionDlg.cpp" line="279"/>
+        <location filename="../src/ConversionDlg.cpp" line="352"/>
         <source>Lossy: quality will be lost.</source>
         <translation>Verlustbehaftet: Es geht Qualität verloren.</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="193"/>
+        <location filename="../src/ConversionDlg.cpp" line="133"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="256"/>
-        <location filename="../src/ConversionDlg.cpp" line="311"/>
+        <location filename="../src/ConversionDlg.cpp" line="146"/>
+        <source>Include subfolders</source>
+        <translation>Unterordner einbeziehen</translation>
+    </message>
+    <message>
+        <location filename="../src/ConversionDlg.cpp" line="288"/>
+        <source>No convertible files found.</source>
+        <translation>Keine konvertierbaren Dateien gefunden.</translation>
+    </message>
+    <message>
+        <location filename="../src/ConversionDlg.cpp" line="387"/>
+        <location filename="../src/ConversionDlg.cpp" line="446"/>
         <source>Pause</source>
         <translation>Pause</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="273"/>
-        <location filename="../src/ConversionDlg.cpp" line="285"/>
+        <location filename="../src/ConversionDlg.cpp" line="404"/>
+        <location filename="../src/ConversionDlg.cpp" line="416"/>
         <source>Conversions Error</source>
         <translation>Konvertierung - Fehler</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="273"/>
+        <location filename="../src/ConversionDlg.cpp" line="404"/>
         <source>Please select a conversion mode first!</source>
         <translation>Bitte wähle zuerst einen Konvertierungsmodus aus!</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="286"/>
+        <location filename="../src/ConversionDlg.cpp" line="417"/>
         <source>The following required programs are missing on the system:
 
 %1</source>
@@ -69,39 +79,39 @@
 %1</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="291"/>
+        <location filename="../src/ConversionDlg.cpp" line="422"/>
         <source>Conversions</source>
         <translation>Konvertierung</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="292"/>
+        <location filename="../src/ConversionDlg.cpp" line="423"/>
         <source>The selected conversion mode loses quality!
 Really continue?</source>
         <translation>Beim gewählten Konvertierungsmodus geht Qualität verloren!
 Wirklich fortsetzen?</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="322"/>
+        <location filename="../src/ConversionDlg.cpp" line="457"/>
         <source>%1 of %2 converted. -%3 + %4 = %5</source>
         <translation>%1 von %2 konvertiert. -%3 + %4 = %5</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="331"/>
+        <location filename="../src/ConversionDlg.cpp" line="466"/>
         <source>Continue</source>
         <translation>Fortsetzen</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="339"/>
+        <location filename="../src/ConversionDlg.cpp" line="474"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location filename="../src/ConversionDlg.cpp" line="344"/>
+        <location filename="../src/ConversionDlg.cpp" line="479"/>
         <source>Conversion report</source>
         <translation>Konvertierung - Fehlerbericht</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/ConversionDlg.cpp" line="345"/>
+        <location filename="../src/ConversionDlg.cpp" line="480"/>
         <source>Processing finished (%1 successful).
 %n error(s)/note(s) occurred:</source>
         <translation>
@@ -163,17 +173,17 @@ Folgende %n Fehler/Hinweise sind aufgetreten:</numerusform>
 <context>
     <name>Conversions</name>
     <message>
-        <location filename="../src/Conversions.cpp" line="37"/>
+        <location filename="../src/Conversions.cpp" line="79"/>
         <source>jxlinfo could not be started (needed to detect animated JXL files).</source>
         <translation>jxlinfo konnte nicht gestartet werden (wird zum Erkennen animierter JXL-Dateien benötigt).</translation>
     </message>
     <message>
-        <location filename="../src/Conversions.cpp" line="40"/>
+        <location filename="../src/Conversions.cpp" line="82"/>
         <source>File is an animation (only still images are supported).</source>
         <translation>Datei ist eine Animation (nur Einzelbilder werden unterstützt).</translation>
     </message>
     <message>
-        <location filename="../src/Conversions.cpp" line="51"/>
+        <location filename="../src/Conversions.cpp" line="93"/>
         <source>File is an animation with %1 frames (only still images are supported).</source>
         <translation>Datei ist eine Animation mit %1 Frames (nur Einzelbilder werden unterstützt).</translation>
     </message>
@@ -181,27 +191,27 @@ Folgende %n Fehler/Hinweise sind aufgetreten:</numerusform>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="80"/>
+        <location filename="../src/main.cpp" line="32"/>
         <source>Converts image, audio and video files between formats.</source>
         <translation>Konvertiert Bild-, Audio- und Videodateien zwischen verschiedenen Formaten.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="84"/>
-        <source>Also search subfolders of the given folders.</source>
-        <translation>Auch Unterordner der angegebenen Ordner durchsuchen.</translation>
+        <location filename="../src/main.cpp" line="36"/>
+        <source>Also search subfolders of the given folders (initial state of the checkbox).</source>
+        <translation>Auch Unterordner der angegebenen Ordner durchsuchen (Anfangszustand der Checkbox).</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="86"/>
+        <location filename="../src/main.cpp" line="38"/>
         <source>Files and/or folders to convert.</source>
         <translation>Zu konvertierende Dateien und/oder Ordner.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="101"/>
+        <location filename="../src/main.cpp" line="53"/>
         <source>Conversions</source>
         <translation>Konvertierung</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="102"/>
+        <location filename="../src/main.cpp" line="54"/>
         <source>None of the given files can be converted.</source>
         <translation>Keine der übergebenen Dateien kann konvertiert werden.</translation>
     </message>
