@@ -20,10 +20,8 @@ if(result)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-add_compile_options(
-    -Wall -Wextra
-    $<$<NOT:$<CONFIG:Debug>>:-O2>
-)
+# Optimization level: build type (Release: -O3) or, for package builds, makepkg.conf (build type None)
+add_compile_options(-Wall -Wextra)
 
 # --- 2. QT & STANDARD SETUP ---
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets LinguistTools)
@@ -52,7 +50,7 @@ qt_add_translations(mkConversions
 target_compile_definitions(mkConversions PRIVATE
     MKCONVERSIONS_VERSION="${PROJECT_VERSION}"
     QT_NO_CAST_FROM_BYTEARRAY
-    $<$<CONFIG:Release>:NDEBUG>
+    $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
 )
 
 target_include_directories(mkConversions PRIVATE
